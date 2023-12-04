@@ -16,5 +16,6 @@ res = requests.post(
 		]
 	)
 )
-
-print(res.json())
+print(res.text)
+#print(res.status_code)
+#print(res.json())
