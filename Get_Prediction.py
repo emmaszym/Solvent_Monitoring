@@ -41,4 +41,23 @@ for pred in range(predictions):
 
     print(f"    prediction {pred}: Confidence {conf} height {height} class_id {ccity}")
 
+#Meniscus=3, 500mL=2, 1L=0, 2L=1
+#getting bottle size
+for entry in range(predictions):
+	if jsonData["predictions"][entry]["class_id"] == 0:
+		bottle_type=1
+	elif jsonData["predictions"][entry]["class_id"] == 1:
+		bottle_type=2
+	elif jsonData["predictions"][entry]["class_id"] == 2:
+		bottle_type=5
+	else:
+		continue
+for heights in range(predictions):
+	if jsonData["predictions"][heights]["class_id"] == 3:
+		solvent_height = jsonData["predictions"][heights]["height"]
+
+if bottle_type == 1:
+	volume = 1490.8378-3.8065466*solvent_height
+print(volume) 
 #print(jsonData) 
+
