@@ -25,12 +25,13 @@ while i < 100:
 
 	current_time = datetime.datetime.now()
 
-	filename = f"pic_{current_time.day}_{current_time.hour}_{current_time.minute}_{current_time.second}"
+	filename = f"pic_{current_time.day}_{current_time.hour}_{current_time.minute}_{current_time.second}.jpg"
 	cmd1 = f"libcamera-jpeg -o {filename}"
 	subprocess.Popen(cmd1,shell=True, stdout=DEVNULL)
 	time.sleep(10)
 
-	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level/2?api_key=pKCEf1sGVJg10T4haShH"
+#	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level/2?api_key=pKCEf1sGVJg10T4haShH"
+	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level-2/1?api_key=pKCEf1sGVJg10T4haShH"
 
  
 
@@ -61,8 +62,9 @@ while i < 100:
 		conf = jsonData["predictions"][pred]["confidence"]
 		height = jsonData["predictions"][pred]["y"]
 		ccity = jsonData["predictions"][pred]["class_id"]
-		conf_percent=round(conf, 3)*100
-		print(f"    Prediction {pred+1}: Confidence: {conf_percent}% height {height} class_id {ccity}")
+		what_found = jsonData["predictions"][pred]["class"]
+		conf_percent=round(conf*100, 1)
+		print(f"    Prediction {pred+1}: {what_found} at {conf_percent}% Confidence")
 
 #Meniscus=3, 500mL=2, 1L=0, 2L=1
 #getting bottle size
@@ -74,6 +76,7 @@ while i < 100:
 		elif jsonData["predictions"][entry]["class_id"] == 2:
 			bottle_type=5
 		else:
+			#print("No bottle  found")
 			continue
 	for heights in range(predictions):
 		if jsonData["predictions"][heights]["class_id"] == 3:
@@ -107,4 +110,9 @@ while i < 100:
 #vol = 1490.8378-3.8065466*solvent_height
 	round_vol=round(vol,1)
 	print(f" The volume is {round_vol} mL")
+	vol=0
+	round_vol=0
+	solvent_height=0
+	bottle_type=-1
 	i += 1
+	time.sleep(10)
