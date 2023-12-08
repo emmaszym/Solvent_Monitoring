@@ -1,3 +1,4 @@
+
 import time 
 
 import subprocess
@@ -14,6 +15,9 @@ from gpiozero import LED
 
 from gpiozero import Buzzer
 
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+
 buzzer = Buzzer(17)
 led = LED(27)
 strip = LED(22)
@@ -23,6 +27,7 @@ i = 1
 
 while i < 100:
 
+	status = "high"
 	current_time = datetime.datetime.now()
 
 	filename = f"pic_{current_time.day}_{current_time.hour}_{current_time.minute}_{current_time.second}.jpg"
@@ -86,6 +91,7 @@ while i < 100:
 	if bottle_type == 1:
 		vol = 1361- (2.61*solvent_height) - (0.00257*(solvent_height**2))
 		if vol < 200:
+			status = "low"
 			led.on()
 			buzzer.on()
 			time.sleep(2)
@@ -94,6 +100,7 @@ while i < 100:
 	if bottle_type == 5:
 		vol = 990 - (1.9*solvent_height) - (0.002*(solvent_height**2))
 		if vol < 125:
+			status= "low"
 			led.on()
 			buzzer.on()
 			time.sleep(2)
@@ -102,6 +109,7 @@ while i < 100:
 	if bottle_type == 2:
 		vol  = 2488 - (5.33*solvent_height) - (0.0025*(solvent_height**2))	
 		if vol < 400:
+			status = "low"
 			led.on()
 			buzzer.on()
 			time.sleep(2)
@@ -109,10 +117,14 @@ while i < 100:
 			buzzer.off() 
 #vol = 1490.8378-3.8065466*solvent_height
 	round_vol=round(vol,1)
-	print(f" The volume is {round_vol} mL")
+	
+	if status == "high":
+		prGreen(f" The volume is {round_vol} mL")
+	if status == "low":
+		prRed(f" The volume is {round_vol} mL")
 	vol=0
 	round_vol=0
 	solvent_height=0
 	bottle_type=-1
 	i += 1
-	time.sleep(10)
+	time.sleep(5)
