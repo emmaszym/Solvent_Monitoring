@@ -17,6 +17,8 @@ from gpiozero import Buzzer
 
 def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
 def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+def prYellow(skk): print("\033[93m {}\033[00m".format(skk))
+
 
 buzzer = Buzzer(17)
 led = LED(27)
@@ -25,8 +27,10 @@ strip.on()
 os.environ["LIBCAMERA_LOG_LEVELS"] = "3" 
 i = 1
 
-while i < 100:
 
+while i < 100:
+	found = 0
+	meniscus = 0
 	status = "high"
 	current_time = datetime.datetime.now()
 
@@ -36,7 +40,7 @@ while i < 100:
 	time.sleep(10)
 
 #	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level/2?api_key=pKCEf1sGVJg10T4haShH"
-	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level-2/1?api_key=pKCEf1sGVJg10T4haShH"
+	cmd = f"base64 {filename} | curl -d @- https://detect.roboflow.com/solvent-level-2/2?api_key=pKCEf1sGVJg10T4haShH"
 
  
 
@@ -69,27 +73,62 @@ while i < 100:
 		ccity = jsonData["predictions"][pred]["class_id"]
 		what_found = jsonData["predictions"][pred]["class"]
 		conf_percent=round(conf*100, 1)
-		print(f"    Prediction {pred+1}: {what_found} at {conf_percent}% Confidence")
-
+		print(f"  Prediction {pred+1}: {what_found} at {conf_percent}% Confidence")
+	
 #Meniscus=3, 500mL=2, 1L=0, 2L=1
 #getting bottle size
+
 	for entry in range(predictions):
 		if jsonData["predictions"][entry]["class_id"] == 0:
 			bottle_type=1
+			found = 1
 		elif jsonData["predictions"][entry]["class_id"] == 1:
 			bottle_type=2
+			found=1
 		elif jsonData["predictions"][entry]["class_id"] == 2:
 			bottle_type=5
+			found = 1
 		else:
 			#print("No bottle  found")
 			continue
+	if found == 0:
+		vol = 0
+		bottle_type = -1
+		prYellow("Bottle not found")
+		led.on()
+		buzzer.on()
+		time.sleep(0.5)
+		led.off()
+		buzzer.off()
+		time.sleep(0.25)
+		buzzer.on()
+		led.on()
+		time.sleep(0.5)
+		led.off()
+		buzzer.off()
 	for heights in range(predictions):
 		if jsonData["predictions"][heights]["class_id"] == 3:
 			solvent_height = jsonData["predictions"][heights]["y"]
-	solvent_height=solvent_height*0.126
+			meniscus = 1
+	if meniscus == 1:
+		solvent_height=solvent_height*0.126
+	if meniscus == 0:
+		prRed("Meniscus Not Found")
+		vol = 0
+		led.on()
+		buzzer.on()
+		time.sleep(1)
+		led.off()
+		buzzer.off()
+		time.sleep(0.25)
+		led.on()
+		buzzer.on()
+		time.sleep(1)
+		led.off()
+		buzzer.off()
 
 	if bottle_type == 1:
-		vol = 1361- (2.61*solvent_height) - (0.00257*(solvent_height**2))
+		vol = 1395- (2.61*solvent_height) - (0.00257*(solvent_height**2))
 		if vol < 200:
 			status = "low"
 			led.on()
@@ -117,14 +156,15 @@ while i < 100:
 			buzzer.off() 
 #vol = 1490.8378-3.8065466*solvent_height
 	round_vol=round(vol,1)
-	
-	if status == "high":
+	if (found == 0) or (meniscus == 0):
+		prYellow("No volume calculated")
+	elif status == "high":
 		prGreen(f" The volume is {round_vol} mL")
-	if status == "low":
+	elif status == "low":
 		prRed(f" The volume is {round_vol} mL")
 	vol=0
 	round_vol=0
 	solvent_height=0
 	bottle_type=-1
 	i += 1
-	time.sleep(5)
+	#time.sleep(1)
